@@ -10,12 +10,17 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // ¡NUEVO! Estado para mostrar el link de re-verificación
+  const [needsVerification, setNeedsVerification] = useState(false);
+  
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault(); 
     setError(null);
+    setNeedsVerification(false); // Resetea el link en cada intento
     setIsLoading(true);
 
     try {
@@ -32,7 +37,13 @@ const Login = () => {
 
     } catch (err) {
       console.error("Error en el login:", err);
-      setError(err.message);
+      setError(err.message); // Muestra el error (ej. "Cuenta no verificada")
+      
+      // ¡NUEVO! Si el error es de verificación, activamos el estado
+      if (err.message.includes("Cuenta no verificada")) {
+        setNeedsVerification(true);
+      }
+      
     } finally {
       setIsLoading(false);
     }
@@ -57,6 +68,20 @@ const Login = () => {
               <span className="block sm:inline">{error}</span>
             </div>
           )}
+          
+          {/* ¡NUEVO! Link para reenviar código */}
+          {needsVerification && (
+            <div className="text-center text-sm mb-4">
+              <Link 
+                to="/verificar-email" 
+                state={{ email: email }} // Pasamos el email del formulario
+                className="font-medium text-blue-600 hover:text-blue-500"
+              >
+                Haz clic aquí para verificar tu cuenta.
+              </Link>
+            </div>
+          )}
+
           <div>
             <label htmlFor="email-address" className="sr-only">Correo Electrónico</label>
             <input

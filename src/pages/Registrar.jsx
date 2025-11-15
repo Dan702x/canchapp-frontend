@@ -40,9 +40,11 @@ const Registrar = () => {
         password: password
       });
 
-      // 3. Éxito
-      alert("¡Cuenta creada exitosamente! Serás redirigido a Iniciar Sesión.");
-      navigate('/login'); // Redirige a la página de login
+      // --- ¡CAMBIO AQUÍ! ---
+      // 3. Éxito: Redirigimos a la página de verificación
+      alert("¡Cuenta creada exitosamente! Te hemos enviado un correo con un código de verificación.");
+      // Pasamos el email a la nueva página para que sepa a quién verificar
+      navigate('/verificar-email', { state: { email: email } }); 
 
     } catch (err) {
       // 4. Error (ej. "El correo ya existe")

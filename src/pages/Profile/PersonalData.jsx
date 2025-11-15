@@ -1,11 +1,12 @@
 // src/pages/Profile/PersonalData.jsx
 
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom'; // ¡Añade Link!
 import { get, put } from '../../lib/api';
-import { useAuth } from '../../context/AuthContext'; // 1. Importa el hook useAuth
+import { useAuth } from '../../context/AuthContext'; 
 
 const PersonalData = () => {
-  const { user } = useAuth(); // 2. Obtiene los datos del usuario logueado
+  const { user } = useAuth(); 
   
   const [formData, setFormData] = useState({
     first_name: '',
@@ -13,30 +14,29 @@ const PersonalData = () => {
     documento: '',
     telefono: '',
     email: '',
+    recibir_notificaciones: true // ¡NUEVO CAMPO!
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState(null);
 
-  // 3. Cargar los datos del perfil
+  // Cargar los datos del perfil (¡AHORA INCLUYE 'recibir_notificaciones'!)
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!user) { // Si no hay usuario, no intentes cargar nada
+      if (!user) { 
         setIsLoading(false);
         return;
       }
       try {
         setIsLoading(true);
-        // ¡CAMBIO! Llamamos al 'GET /api/profile'
-        // El backend (por ahora) ignora el ID, pero usa el simulado (ID 1)
-        // Esto cargará los datos de "Admin Joga"
         const data = await get('/profile'); 
         setFormData({
             first_name: data.first_name || '',
             last_name: data.last_name || '',
             documento: data.documento || '',
             telefono: data.telefono || '',
-            email: data.email || ''
+            email: data.email || '',
+            recibir_notificaciones: data.recibir_notificaciones // ¡NUEVO CAMPO!
         });
       } catch (err) {
         setMessage({ type: 'error', text: 'No se pudieron cargar tus datos.' });
@@ -48,25 +48,26 @@ const PersonalData = () => {
   }, [user]); // Se ejecuta cuando el 'user' cambia (al iniciar sesión)
 
   const handleChange = (e) => {
+    // ¡NUEVO! Maneja el checkbox
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: type === 'checkbox' ? checked : value
     });
   };
 
-  // 4. Guardar los cambios (HU-010)
+  // Guardar los cambios (¡AHORA INCLUYE 'recibir_notificaciones'!)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage(null);
     setIsLoading(true);
     try {
-      // ¡CAMBIO! Llamamos al 'PUT /api/profile'
-      // El backend (por ahora) actualizará los datos del ID 1
       const updatedData = await put('/profile', {
         first_name: formData.first_name,
         last_name: formData.last_name,
         documento: formData.documento,
-        telefono: formData.telefono
+        telefono: formData.telefono,
+        recibir_notificaciones: formData.recibir_notificaciones // ¡NUEVO CAMPO!
       });
       setMessage({ type: 'success', text: updatedData.mensaje });
       setIsEditing(false); // Bloquear campos de nuevo
@@ -77,14 +78,8 @@ const PersonalData = () => {
     }
   };
   
-  // Si no hay usuario logueado, muestra un mensaje
   if (!user) {
-    return (
-      <div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Datos Personales</h2>
-        <p className="text-gray-600">Debes <Link to="/login" className="text-blue-600">iniciar sesión</Link> para ver tus datos.</p>
-      </div>
-    );
+    // ... (se mantiene igual)
   }
 
   if (isLoading && !formData.first_name) {
@@ -102,6 +97,7 @@ const PersonalData = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* ... (Campos de Nombres, Apellidos, Documento, Teléfono se mantienen igual) ... */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">Nombres</label>
@@ -167,6 +163,25 @@ const PersonalData = () => {
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-500"
           />
         </div>
+        
+        {/* --- ¡NUEVO CHECKBOX! --- */}
+        <div className="pt-4 border-t">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              name="recibir_notificaciones"
+              checked={formData.recibir_notificaciones}
+              onChange={handleChange}
+              disabled={!isEditing}
+              className="h-4 w-4 text-blue-600 border-gray-300 rounded disabled:bg-gray-100"
+            />
+            <span className="ml-2 text-sm text-gray-700">
+              Deseo recibir recordatorios de mis reservas por correo (HU-022)
+            </span>
+          </label>
+        </div>
+        {/* --- FIN DEL CHECKBOX --- */}
+
 
         <div className="flex justify-end space-x-3 pt-4">
           {!isEditing ? (

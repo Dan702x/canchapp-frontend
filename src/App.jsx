@@ -7,6 +7,8 @@ import ConfirmacionFinal from './pages/ConfirmacionFinal';
 import Inicio from './pages/Inicio';
 import Login from './pages/Login';
 import Registrar from './pages/Registrar';
+import VerificarEmail from './pages/VerificarEmail'; // <-- 1. AÑADE ESTA IMPORTACIÓN
+
 // Importaciones de Perfil (Asegúrate que las rutas existan)
 import ProfileLayout from './components/ProfileLayout';
 import DeleteAccount from './pages/Profile/DeleteAccount';
@@ -40,6 +42,10 @@ function App() {
           {/* NUEVO: Rutas de Login y Registro (Ahora dentro del Layout) */}
           <Route path="/login" element={<Login />} />
           <Route path="/registrar" element={<Registrar />} />
+          
+          {/* 2. AÑADE ESTA RUTA */}
+          <Route path="/verificar-email" element={<VerificarEmail />} />
+          
           {/* --- Fin de rutas movidas --- */}
           
           {/* 1. Detalle de la cancha */}

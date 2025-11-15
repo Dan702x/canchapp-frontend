@@ -1,13 +1,17 @@
 // src/pages/DetalleCancha/DetalleCancha.jsx
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { get, post } from '../../lib/api'; // Asegúrate de importar 'post'
+import { useAuth } from '../../context/AuthContext';
 
 const DetalleCancha = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+  const location = useLocation();
+  const { user } = useAuth();
+
+  const idReservaParaReseñar = location.state?.idReservaParaReseñar;
   const [cancha, setCancha] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,7 +31,8 @@ const DetalleCancha = () => {
       setError(null);
       const data = await get(`/canchas/${id}`);
       setCancha(data);
-      setMainImage(data.gallery[0]); 
+      setMainImage(data.gallery[0]);
+      setIsFavorite(data.is_favorito);
     } catch (err) {
       console.error(err);
       setError("No se pudo cargar la información de la cancha.");
@@ -63,6 +68,8 @@ const DetalleCancha = () => {
     </svg>
   );
   
+
+
   const ReviewStars = ({ rating }) => {
     return (
       <div className="flex items-center">
@@ -101,43 +108,68 @@ const DetalleCancha = () => {
     navigate(`/cancha/${id}/reservar`);
   };
 
-  // Esta función ahora SÍ PUEDE VER a 'fetchCanchaDetalle'
+  // src/pages/DetalleCancha/DetalleCancha.jsx
+
   const handleSubmitReview = async (e) => {
     e.preventDefault();
+
     if (newRating === 0 || newComment.trim() === "") {
       alert("Por favor, selecciona una calificación y escribe un comentario.");
       return;
     }
 
-    // --- Lógica para enviar la reseña ---
-    // 1. Necesitamos saber qué "reserva completada" estamos reseñando.
-    // Buscamos en la BD una reserva completada del usuario para esta cancha
-    // (Esto es un truco, idealmente el backend lo validaría con más fuerza)
-    const idReservaCompletada = 2; // Simulación (Reserva 2 = "El Camp Nou")
-    
-    // Solo permitimos reseñar "El Camp Nou" (id=2) en esta demo
-    if (id !== "2") {
-        alert("Demo: Solo puedes dejar reseñas en 'El Camp Nou de Surco' (cancha id 2) donde tienes una reserva completada.");
-        return;
-    }
-    
-    try {
+    // --- ¡AQUÍ ESTÁ TU LÓGICA! ---
+
+    // ESCENARIO 1: El usuario SÍ vino desde "Mis Reservas"
+    if (idReservaParaReseñar) {
+      try {
+        // Llama al backend con el ID de reserva correcto
         await post('/resenas', {
-            id_reserva: idReservaCompletada,
-            calificacion: newRating,
-            comentario: newComment
+          id_reserva: idReservaParaReseñar, // <-- ID REAL
+          calificacion: newRating,
+          comentario: newComment
         });
         
         alert("¡Gracias por tu reseña!");
-        
         setNewRating(0);
         setNewComment("");
-        // ¡Ahora sí puede llamar a la función para refrescar la lista!
-        fetchCanchaDetalle(); 
+        fetchCanchaDetalle(); // Refresca la lista de reseñas
         
-    } catch (err) {
+      } catch (err) {
         console.error(err);
+        // El backend ya nos dirá si "Ya existe una reseña para esta reserva"
         alert(`Error al enviar la reseña: ${err.message}`);
+      }
+
+    } else {
+      // ESCENARIO 2: El usuario navegó manualmente (el "Troll")
+      // Le mostramos el alert que pediste
+      alert("Para dejar una reseña, primero debes completar una reserva en esta cancha y luego acceder desde el enlace 'Dejar reseña' en tu perfil.");
+    }
+  };
+
+// ¡AÑADE ESTA NUEVA FUNCIÓN!
+  const handleFavoriteClick = async () => {
+    if (!user) {
+      alert("Debes iniciar sesión para añadir favoritos.");
+      return;
+    }
+
+    const originalState = isFavorite;
+    setIsFavorite(!originalState); // Actualización optimista
+
+    try {
+      if (originalState) {
+        // Si YA ERA favorito, lo borramos
+        await del(`/favoritos/${cancha.id}`);
+      } else {
+        // Si NO ERA favorito, lo añadimos
+        await post('/favoritos', { id_cancha: cancha.id });
+      }
+    } catch (err) {
+      console.error("Error al cambiar favorito:", err);
+      setIsFavorite(originalState); // Revertir si falla
+      alert(`Error al guardar favorito: ${err.message}`);
     }
   };
 
@@ -193,13 +225,16 @@ const DetalleCancha = () => {
               <span className="text-xl font-semibold text-green-600 bg-green-100 px-4 py-1 rounded-full">
                 Disponible
               </span>
-              <button
-                onClick={() => setIsFavorite(!isFavorite)}
-                className={`p-2 rounded-full transition-colors duration-200 ${isFavorite ? 'text-red-500' : 'text-gray-300 hover:text-red-400'}`}
-                aria-label="Marcar como favorito"
-              >
-                <IconHeart />
-              </button>
+              {user && (
+                <button
+                  // ¡CAMBIO! Llama a la nueva función
+              	  onClick={handleFavoriteClick} 
+              	  className={`p-2 rounded-full transition-colors duration-200 ${isFavorite ? 'text-red-500' : 'text-gray-300 hover:text-red-400'}`}
+              	  aria-label="Marcar como favorito"
+                >
+              	  <IconHeart />
+                </button>
+              )}
             </div>
           </div>
           

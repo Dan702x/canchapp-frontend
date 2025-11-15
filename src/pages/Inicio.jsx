@@ -114,7 +114,8 @@ const Inicio = () => {
               ubicacion={cancha.ubicacion}
               precio={cancha.precio}
               imagen={cancha.imagen}
-              distancia={cancha.distancia} 
+              distancia={cancha.distancia}
+              is_favorito={cancha.is_favorito}
             />
           ))}
         </div>
