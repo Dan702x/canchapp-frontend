@@ -1,12 +1,14 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { get, post } from '../lib/api';
+import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true); 
+  const navigate = useNavigate();
 
   // Función para Iniciar Sesión
   const login = (userData) => {
@@ -14,7 +16,7 @@ export const AuthProvider = ({ children }) => {
     // El token se guarda en una cookie HttpOnly desde el backend
   };
 
-  // Función para Cerrar Sesión
+// Función para Cerrar Sesión
   const logout = async () => {
     try {
       await post('/logout', {}); 
@@ -22,6 +24,7 @@ export const AuthProvider = ({ children }) => {
       console.error("Error al cerrar sesión en el backend:", err);
     } finally {
       setUser(null);
+      navigate('/'); // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
     }
   };
   

@@ -94,18 +94,34 @@ const GestionEmpresas = () => {
     fetchEmpresas();
   }, [filtroEstado]);
 
-  // Misma función de 'gestionar_solicitud' (Aprobar/Rechazar)
   const handleGestionSolicitud = async (idEmpresa, accion) => {
     try {
       let payload = { accion };
+
       if (accion === 'rechazar') {
         const motivo = window.prompt("Por favor, ingresa el motivo del rechazo:");
-        if (motivo === null) return; 
-        if (motivo.trim() === "") { alert("El motivo no puede estar vacío."); return; }
+        if (motivo === null) return; // Si el admin presiona "Cancelar" en el prompt
+        if (motivo.trim() === "") { 
+          alert("El motivo no puede estar vacío."); 
+          return; 
+        }
         payload.motivo = motivo;
       }
+
+      // 1. Llamamos al backend
       await put(`/admin/solicitudes/${idEmpresa}`, payload);
-      fetchEmpresas(); // Recargamos la lista
+
+      // --- ¡AQUÍ ESTÁ LA ALERTA QUE PEDISTE! ---
+      if (accion === 'aprobar') {
+        alert("¡Empresa aceptada exitosamente!");
+      } else {
+        alert("Solicitud rechazada correctamente.");
+      }
+      // --- FIN DE LA ALERTA ---
+
+      // 2. Recargamos la lista
+      fetchEmpresas(); 
+
     } catch (err) {
       alert(`Error al gestionar la solicitud: ${err.message}`);
     }

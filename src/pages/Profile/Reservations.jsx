@@ -5,10 +5,20 @@ import { Link, useNavigate } from 'react-router-dom';
 import { get, put } from '../../lib/api';
 import ModalModificarReserva from '../../components/ModalModificarReserva'; 
 import ModalCompartirReserva from '../../components/ModalCompartirReserva'; 
-import { FaShareAlt } from 'react-icons/fa'; // Icono para compartir
+import { FaShareAlt } from 'react-icons/fa'; 
 
 // --- Componente de Tarjeta de Reserva (para no repetir código) ---
-const ReservationCard = ({ reserva, onCancelar, onModificar, onCompartir, onDejarReseña, onPagarAhora }) => {
+// ¡MODIFICADO! Acepta las nuevas props onPagarAhora, onVerComprobante, y API_URL
+const ReservationCard = ({ 
+  reserva, 
+  onCancelar, 
+  onModificar, 
+  onCompartir, 
+  onDejarReseña, 
+  onPagarAhora,
+  onVerComprobante,
+  API_URL 
+}) => {
   
   const formattedDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -68,12 +78,27 @@ const ReservationCard = ({ reserva, onCancelar, onModificar, onCompartir, onDeja
             >
               <FaShareAlt className="mr-1" /> Compartir
             </button>
+            {/* --- ¡BOTONES AÑADIDOS! --- */}
+            <button 
+              onClick={() => onVerComprobante(reserva)}
+              className="font-medium text-green-600 hover:text-green-800"
+            >
+              Ver Comprobante
+            </button>
+            <a 
+              href={`${API_URL}/reservas/${reserva.id_reserva}/comprobante-pdf`}
+              download
+              className="font-medium text-green-600 hover:text-green-800"
+            >
+              Descargar
+            </a>
           </>
         )}
          {reserva.estado === 'pendiente' && (
           <>
+             {/* --- ¡BOTÓN CORREGIDO! --- */}
              <button 
-              onClick={() => onPagarAhora(reserva)}
+              onClick={() => onPagarAhora(reserva)} 
               className="font-medium text-yellow-600 hover:text-yellow-800"
             >
               Pagar ahora
@@ -100,6 +125,20 @@ const ReservationCard = ({ reserva, onCancelar, onModificar, onCompartir, onDeja
             >
               <FaShareAlt className="mr-1" /> Compartir
             </button>
+            {/* --- ¡BOTONES AÑADIDOS! --- */}
+            <button 
+              onClick={() => onVerComprobante(reserva)}
+              className="font-medium text-green-600 hover:text-green-800"
+            >
+              Ver Comprobante
+            </button>
+            <a 
+              href={`${API_URL}/reservas/${reserva.id_reserva}/comprobante-pdf`}
+              download
+              className="font-medium text-green-600 hover:text-green-800"
+            >
+              Descargar
+            </a>
            </>
         )}
          {reserva.estado === 'cancelada' && (
@@ -112,24 +151,23 @@ const ReservationCard = ({ reserva, onCancelar, onModificar, onCompartir, onDeja
 // --- Fin del Componente Tarjeta ---
 
 
+// --- ¡COMPONENTE PRINCIPAL! ---
 const Reservations = () => {
   const [reservas, setReservas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // ¡NUEVO! Estado para la pestaña activa
-  const [activeTab, setActiveTab] = useState('proximos'); // 'proximos' o 'historial'
+  const [activeTab, setActiveTab] = useState('proximos');
 
-  // Estados para el modal de Modificar
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedReserva, setSelectedReserva] = useState(null);
 
-  // ¡NUEVO! Estados para el modal de Compartir
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [sharingReserva, setSharingReserva] = useState(null);
   
-  // hook para navegar
   const navigate = useNavigate();
+  // ¡AÑADIDA LA URL DE LA API!
+  const API_URL = import.meta.env.VITE_API || 'http://localhost:8080/api';
 
   const fetchReservas = async () => {
     try {
@@ -148,7 +186,6 @@ const Reservations = () => {
     fetchReservas();
   }, []);
 
-  // --- Lógica de filtrado para las pestañas ---
   const { proximosReservas, historialReservas } = useMemo(() => {
     const proximos = reservas.filter(
       r => r.estado === 'confirmada' || r.estado === 'pendiente'
@@ -157,28 +194,31 @@ const Reservations = () => {
       r => r.estado === 'completada' || r.estado === 'cancelada'
     );
     return { proximosReservas: proximos, historialReservas: historial };
-  }, [reservas]); // Se recalcula solo si la lista de 'reservas' cambia
+  }, [reservas]); 
 
-  // Lista a mostrar (basada en la pestaña activa)
   const displayedReservas = activeTab === 'proximos' ? proximosReservas : historialReservas;
   
   // --- Manejadores de Acciones ---
 
   const handleCancelar = async (idReserva) => {
-    // (Esta función se mantiene igual)
     if (!window.confirm('¿Estás seguro de que quieres cancelar esta reserva?')) {
       return;
     }
     try {
+      // 1. Llama al backend para cancelar
       await put(`/reservas/${idReserva}/cancelar`, {});
+
+      // --- ¡ESTA ES LA LÍNEA QUE PEDISTE! ---
+      alert("Reserva cancelada correctamente");
+
+      // 2. Refresca la lista de reservas
       fetchReservas(); 
     } catch (err) {
       console.error(err);
       alert(`Error al cancelar la reserva: ${err.message}`);
     }
   };
-
-  // (Funciones del modal de Modificar se mantienen igual)
+  
   const handleOpenEditModal = (reserva) => {
     setSelectedReserva(reserva);
     setIsEditModalOpen(true);
@@ -192,29 +232,6 @@ const Reservations = () => {
     fetchReservas(); 
   };
 
-// ¡NUEVA FUNCIÓN!
-const handlePagarAhora = (reserva) => {
-  // Formateamos los datos que necesita la página de pago
-  const fecha = new Date(reserva.fecha_hora_inicio).toLocaleDateString('es-ES', { 
-    weekday: 'long', day: 'numeric', month: 'long' 
-  });
-  const hora = new Date(reserva.fecha_hora_inicio).toLocaleTimeString('es-ES', { 
-    hour: '2-digit', minute: '2-digit' 
-  });
-
-  // Navegamos a la pasarela de pago CON el estado
-  navigate('/reservar/pago', {
-    state: {
-      id_reserva: reserva.id_reserva,
-      monto: parseFloat(reserva.precio_total),
-      canchaNombre: reserva.cancha_nombre,
-      fecha: fecha,
-      hora: hora
-    }
-  });
-};
-
-  // ¡NUEVO! Funciones del modal de Compartir
   const handleOpenShareModal = (reserva) => {
     setSharingReserva(reserva);
     setIsShareModalOpen(true);
@@ -224,10 +241,55 @@ const handlePagarAhora = (reserva) => {
     setIsShareModalOpen(false);
   };
 
-  // ¡NUEVO! Función para el botón "Dejar Reseña"
-  const handleDejarReseña = (reserva) => {
-    navigate(`/cancha/${reserva.id_cancha}`, {
-      state: { idReservaParaReseñar: reserva.id_reserva }
+const handleDejarReseña = (reserva) => {
+    // ¡CAMBIO! Navegamos a la nueva ruta usando la URL
+    navigate(`/cancha/${reserva.id_cancha}/reseñar/${reserva.id_reserva}`);
+  };
+
+  // ¡FUNCIÓN AÑADIDA!
+  const handlePagarAhora = (reserva) => {
+    const fecha = new Date(reserva.fecha_hora_inicio).toLocaleDateString('es-ES', { 
+      weekday: 'long', day: 'numeric', month: 'long' 
+    });
+    const hora = new Date(reserva.fecha_hora_inicio).toLocaleTimeString('es-ES', { 
+      hour: '2-digit', minute: '2-digit' 
+    });
+    
+    navigate('/reservar/pago', {
+      state: {
+        id_reserva: reserva.id_reserva,
+        monto: parseFloat(reserva.precio_total),
+        canchaNombre: reserva.cancha_nombre,
+        fecha: fecha,
+        hora: hora
+      }
+    });
+  };
+
+  // ¡ESTA ES LA FUNCIÓN QUE FALTABA O ESTABA MAL COLOCADA!
+  const handleVerComprobante = (reserva) => {
+    const fecha = new Date(reserva.fecha_hora_inicio).toLocaleDateString('es-ES', { 
+      day: 'numeric', month: 'long', year: 'numeric' 
+    });
+    const horaInicio = new Date(reserva.fecha_hora_inicio).toLocaleTimeString('es-ES', { 
+      hour: '2-digit', minute: '2-digit' 
+    });
+    const horaFin = new Date(reserva.fecha_hora_fin).toLocaleTimeString('es-ES', { 
+      hour: '2-digit', minute: '2-digit' 
+    });
+    const hora = `${horaInicio} - ${horaFin}`;
+
+    navigate('/reservar/comprobante', {
+      replace: true, 
+      state: {
+        id_reserva: reserva.id_reserva,
+        monto: parseFloat(reserva.precio_total),
+        cancha: reserva.cancha_nombre,
+        fecha: fecha,
+        hora: hora,
+        metodo: reserva.metodo_pago || 'N/A', 
+        operacion: reserva.id_transaccion_externa || 'N/A' 
+      }
     });
   };
 
@@ -245,7 +307,6 @@ const handlePagarAhora = (reserva) => {
     <div>
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Mis Reservas</h2>
       
-      {/* --- ¡NUEVO! Pestañas "Próximos" e "Historial" --- */}
       <div className="flex border-b border-gray-300 mb-6">
         <button
           className={getTabClass('proximos')}
@@ -283,13 +344,14 @@ const handlePagarAhora = (reserva) => {
                 onCompartir={handleOpenShareModal}
                 onDejarReseña={handleDejarReseña}
                 onPagarAhora={handlePagarAhora}
+                onVerComprobante={handleVerComprobante} // ¡Ahora sí existe!
+                API_URL={API_URL} 
               />
             ))
           )}
         </div>
       )}
 
-      {/* Renderiza el modal de Modificar (si está abierto) */}
       {isEditModalOpen && (
         <ModalModificarReserva 
           reserva={selectedReserva}
@@ -298,7 +360,6 @@ const handlePagarAhora = (reserva) => {
         />
       )}
 
-      {/* ¡NUEVO! Renderiza el modal de Compartir (si está abierto) */}
       {isShareModalOpen && (
         <ModalCompartirReserva
           reserva={sharingReserva}

@@ -1,13 +1,15 @@
 // src/pages/SolicitudEmpresa.jsx
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { post } from '../lib/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext'; // Importamos useAuth
 
 const SolicitudEmpresa = () => {
-  const { user } = useAuth();
+  // --- ¡CAMBIO! Obtenemos refreshUser ---
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     nombre: '',
     ruc: '',
@@ -15,17 +17,18 @@ const SolicitudEmpresa = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  // --- ¡CAMBIO! El estado 'success' ya no es necesario ---
+  // const [success, setSuccess] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // --- ¡CAMBIO! handleSubmit ahora refresca el estado y redirige ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
     
     if (!formData.nombre || !formData.ruc) {
       setError('El nombre de la empresa y el RUC son obligatorios.');
@@ -39,14 +42,18 @@ const SolicitudEmpresa = () => {
 
     setIsLoading(true);
     try {
-      const response = await post('/empresas/solicitar-registro', formData);
-      setSuccess(response.mensaje);
-      setFormData({ nombre: '', ruc: '', descripcion: '' });
-      setTimeout(() => navigate('/perfil/datos'), 3000); // Redirige al perfil
+      // 1. Enviamos la solicitud
+      await post('/empresas/solicitar-registro', formData);
+      
+      // 2. Forzamos al AuthContext a recargar (¡Esto actualiza el header!)
+      await refreshUser();
+      
+      // 3. Redirigimos al usuario a la página de "Ver Solicitud"
+      navigate('/mi-solicitud');
+
     } catch (err) {
       setError(err.message);
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Solo detenemos la carga si hay un error
     }
   };
 
@@ -59,15 +66,7 @@ const SolicitudEmpresa = () => {
     );
   }
   
-  if (success) {
-     return (
-        <div className="max-w-xl mx-auto my-12 p-8 bg-white shadow-lg rounded-lg text-center">
-            <h1 className="text-2xl font-bold text-green-600 mb-4">¡Solicitud Enviada!</h1>
-            <p className="text-gray-700">{success}</p>
-            <p className="mt-2 text-sm text-gray-500">Serás redirigido a tu perfil en 3 segundos...</p>
-        </div>
-    );
-  }
+  // --- ¡CAMBIO! El bloque 'if (success)' se eliminó ---
 
   return (
     <div className="max-w-xl mx-auto my-12 p-8 bg-white shadow-lg rounded-lg">

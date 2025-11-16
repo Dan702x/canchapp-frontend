@@ -57,24 +57,33 @@ const PersonalData = () => {
   };
 
   // Guardar los cambios (¡AHORA INCLUYE 'recibir_notificaciones'!)
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage(null);
-    setIsLoading(true);
+    setIsLoading(true); // Inicia la carga
+
+    // --- ¡AQUÍ ESTÁ LA VALIDACIÓN! ---
+    if (formData.first_name.trim() === '' || formData.last_name.trim() === '') {
+      setMessage({ type: 'error', text: 'El nombre y los apellidos no pueden estar vacíos.' });
+      setIsLoading(false); // Detenemos la carga
+      return; // Detenemos la función
+    }
+    // --- FIN DE LA VALIDACIÓN ---
+
     try {
       const updatedData = await put('/profile', {
         first_name: formData.first_name,
         last_name: formData.last_name,
         documento: formData.documento,
         telefono: formData.telefono,
-        recibir_notificaciones: formData.recibir_notificaciones // ¡NUEVO CAMPO!
+        recibir_notificaciones: formData.recibir_notificaciones
       });
       setMessage({ type: 'success', text: updatedData.mensaje });
       setIsEditing(false); // Bloquear campos de nuevo
     } catch (err) {
       setMessage({ type: 'error', text: err.message });
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Se detiene la carga al final (sea éxito o error)
     }
   };
   

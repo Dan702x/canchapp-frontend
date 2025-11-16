@@ -6,12 +6,12 @@ import { get, post } from '../../lib/api'; // Asegúrate de importar 'post'
 import { useAuth } from '../../context/AuthContext';
 
 const DetalleCancha = () => {
-  const { id } = useParams();
+  const { id, id_reserva } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
 
-  const idReservaParaReseñar = location.state?.idReservaParaReseñar;
+  const idReservaParaReseñar = id_reserva || location.state?.idReservaParaReseñar;
   const [cancha, setCancha] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,6 +21,7 @@ const DetalleCancha = () => {
   
   const [newRating, setNewRating] = useState(0);
   const [newComment, setNewComment] = useState("");
+  const [reviewError, setReviewError] = useState(null);
 
   // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
   // 1. Movemos la función fetchCanchaDetalle FUERA del useEffect
@@ -112,40 +113,56 @@ const DetalleCancha = () => {
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
+    setReviewError(null); 
 
-    if (newRating === 0 || newComment.trim() === "") {
-      alert("Por favor, selecciona una calificación y escribe un comentario.");
+    if (newRating === 0) {
+      setReviewError("Por favor, selecciona una calificación.");
+      return;
+    }
+    if (newComment.trim() === "") {
+      setReviewError("Por favor, escribe un comentario.");
       return;
     }
 
-    // --- ¡AQUÍ ESTÁ TU LÓGICA! ---
+    // ¡LÓGICA ACTUALIZADA!
+    try {
+        let endpoint = '';
+        let payload = {};
 
-    // ESCENARIO 1: El usuario SÍ vino desde "Mis Reservas"
-    if (idReservaParaReseñar) {
-      try {
-        // Llama al backend con el ID de reserva correcto
-        await post('/resenas', {
-          id_reserva: idReservaParaReseñar, // <-- ID REAL
-          calificacion: newRating,
-          comentario: newComment
-        });
-        
-        alert("¡Gracias por tu reseña!");
-        setNewRating(0);
-        setNewComment("");
-        fetchCanchaDetalle(); // Refresca la lista de reseñas
-        
-      } catch (err) {
-        console.error(err);
-        // El backend ya nos dirá si "Ya existe una reseña para esta reserva"
-        alert(`Error al enviar la reseña: ${err.message}`);
-      }
+        if (idReservaParaReseñar) {
+            // Flujo 1: El usuario vino desde "Mis Reservas" (tu solución de URL)
+            // Usamos el endpoint antiguo
+            endpoint = '/resenas';
+            payload = {
+              id_reserva: idReservaParaReseñar,
+              calificacion: newRating,
+              comentario: newComment
+            };
+        } else {
+            // Flujo 2: El usuario navegó manualmente
+            // Usamos el NUEVO endpoint genérico
+            endpoint = `/canchas/${id}/reseñar`;
+            payload = {
+              calificacion: newRating,
+              comentario: newComment
+            };
+        }
 
-    } else {
-      // ESCENARIO 2: El usuario navegó manualmente (el "Troll")
-      // Le mostramos el alert que pediste
-      alert("Para dejar una reseña, primero debes completar una reserva en esta cancha y luego acceder desde el enlace 'Dejar reseña' en tu perfil.");
-    }
+        // Enviamos la reseña al endpoint correspondiente
+        await post(endpoint, payload);
+        
+        alert("¡Gracias por tu reseña!");
+        setNewRating(0);
+        setNewComment("");
+        setReviewError(null); 
+        fetchCanchaDetalle(); // Refresca la lista de reseñas
+
+    } catch (err) {
+        // El backend nos dará el error correcto
+        // (ej. "Ya existe una reseña..." o "Debes completar una reserva...")
+        console.error(err);
+        setReviewError(err.message);
+    }
   };
 
 // ¡AÑADE ESTA NUEVA FUNCIÓN!
@@ -336,10 +353,12 @@ const DetalleCancha = () => {
                     onChange={(e) => setNewComment(e.target.value)}
                   ></textarea>
                 </div>
+                  {reviewError && (
+                    <p className="text-red-500 text-sm mb-4">{reviewError}</p>
+                  )}
                 <button 
                   type="submit"
                   className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300 disabled:opacity-50"
-                  disabled={newRating === 0 || newComment.trim() === ""}
                 >
                   Publicar reseña
                 </button>

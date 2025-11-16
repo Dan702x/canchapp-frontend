@@ -70,23 +70,23 @@ const Header = () => {
             {user ? (
               // --- VISTA "LOGUEADO" ---
               <>
-                {/* --- ¡NUEVO! ENLACE DE ADMIN --- */}
-                {user.id_rol === 2 && (
+{/* --- LÓGICA CORREGIDA DE ROLES --- */}
+                {user.id_rol === 2 ? (
+                  // 1. SI ES ADMIN
                   <Link to="/admin/empresas" className="font-medium text-red-600 hover:text-red-800">
                     Panel Admin
                   </Link>
-                )}
-                {/* --- FIN ENLACE DE ADMIN --- */}
-
-                {/* --- LÓGICA DE EMPRESA --- */}
-                {user.empresa_estado === 'activo' ? (
-                  <Link to="/mi-negocio/sedes" className="text-green-600 hover:text-green-800 font-medium">Mi Negocio</Link>
-                ) : user.empresa_estado === 'pendiente' || user.empresa_estado === 'rechazado' ? (
-                  <Link to="/mi-solicitud" className="text-yellow-600 hover:text-yellow-800 font-medium">Ver Solicitud</Link>
                 ) : (
-                  <Link to="/soy-empresa" className="text-green-600 hover:text-green-800 font-medium">¿Tienes una cancha?</Link>
+                  // 2. SI ES JUGADOR (mostramos los enlaces de empresa)
+                  user.empresa_estado === 'activo' ? (
+                    <Link to="/mi-negocio/sedes" className="text-green-600 hover:text-green-800 font-medium">Mi Negocio</Link>
+                  ) : user.empresa_estado === 'pendiente' || user.empresa_estado === 'rechazado' ? (
+                    <Link to="/mi-solicitud" className="text-yellow-600 hover:text-yellow-800 font-medium">Ver Solicitud</Link>
+                  ) : (
+                    <Link to="/soy-empresa" className="text-green-600 hover:text-green-800 font-medium">¿Tienes una cancha?</Link>
+                  )
                 )}
-                {/* --- FIN LÓGICA DE EMPRESA --- */}
+                {/* --- FIN LÓGICA CORREGIDA --- */}
 
                 <span className="text-gray-700 font-medium">
                   Hola, {user.first_name || 'Usuario'}
@@ -199,23 +199,23 @@ const Header = () => {
               {user ? (
                 // --- VISTA "LOGUEADO" (Móvil) ---
                 <>
-                  {/* --- ¡NUEVO! ENLACE DE ADMIN --- */}
-                  {user.id_rol === 2 && (
+{/* --- LÓGICA CORREGIDA DE ROLES (Móvil) --- */}
+                  {user.id_rol === 2 ? (
+                    // 1. SI ES ADMIN
                     <Link to="/admin/empresas" className="block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50" onClick={() => setIsMobileMenuOpen(false)}>
                       Panel Admin
                     </Link>
-                  )}
-                  {/* --- FIN ENLACE DE ADMIN --- */}
-
-                  {/* --- LÓGICA DE EMPRESA (Móvil) --- */}
-                  {user.empresa_estado === 'activo' ? (
-                    <Link to="/mi-negocio/sedes" className="block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50" onClick={() => setIsMobileMenuOpen(false)}>Mi Negocio</Link>
-                  ) : user.empresa_estado === 'pendiente' || user.empresa_estado === 'rechazado' ? (
-                    <Link to="/mi-solicitud" className="block px-3 py-2 rounded-md text-base font-medium text-yellow-600 hover:bg-yellow-50" onClick={() => setIsMobileMenuOpen(false)}>Ver Solicitud</Link>
                   ) : (
-                    <Link to="/soy-empresa" className="block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50" onClick={() => setIsMobileMenuOpen(false)}>¿Tienes una cancha?</Link>
+                    // 2. SI ES JUGADOR
+                    user.empresa_estado === 'activo' ? (
+                      <Link to="/mi-negocio/sedes" className="block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50" onClick={() => setIsMobileMenuOpen(false)}>Mi Negocio</Link>
+                    ) : user.empresa_estado === 'pendiente' || user.empresa_estado === 'rechazado' ? (
+                      <Link to="/mi-solicitud" className="block px-3 py-2 rounded-md text-base font-medium text-yellow-600 hover:bg-yellow-50" onClick={() => setIsMobileMenuOpen(false)}>Ver Solicitud</Link>
+                    ) : (
+                      <Link to="/soy-empresa" className="block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50" onClick={() => setIsMobileMenuOpen(false)}>¿Tienes una cancha?</Link>
+                    )
                   )}
-                  {/* --- FIN LÓGICA DE EMPRESA --- */}
+                  {/* --- FIN LÓGICA CORREGIDA --- */}
 
                   <div className="border-t border-gray-200 !mt-4 !mb-2"></div>
 

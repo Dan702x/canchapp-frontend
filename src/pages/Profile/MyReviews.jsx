@@ -78,13 +78,17 @@ const MyReviews = () => {
     fetchMyReviews(); 
   }, []); 
 
-  const handleDelete = async (idReseña) => {
+const handleDelete = async (idReseña) => {
       if (!window.confirm('¿Estás seguro de que quieres eliminar esta reseña? Esta acción no se puede deshacer.')) {
           return;
       }
       try {
           await del(`/resenas/${idReseña}`);
-          fetchMyReviews(); 
+
+            // --- ¡ESTA ES LA LÍNEA QUE PEDISTE! ---
+          alert("Reseña eliminada correctamente");
+
+          fetchMyReviews(); // Recarga la lista
       } catch (err) {
           console.error(err);
           alert(`Error al eliminar la reseña: ${err.message}`);
@@ -126,13 +130,20 @@ const MyReviews = () => {
     e.preventDefault();
     if (!editingReview) return;
 
+    // --- ¡AQUÍ ESTÁ LA VALIDACIÓN! ---
+    if (editingReview.comment.trim() === "") {
+        alert("El comentario no puede estar vacío.");
+        return; // Detiene el envío
+    }
+    // --- FIN DE LA VALIDACIÓN ---
+
     try {
       // Llama al nuevo endpoint PUT
       await put(`/resenas/${editingReview.id}`, {
         calificacion: editingReview.rating,
         comentario: editingReview.comment
       });
-      
+
       handleCloseModal(); // Cierra el modal
       fetchMyReviews(); // Refresca la lista de reseñas
       alert("¡Reseña actualizada con éxito!");

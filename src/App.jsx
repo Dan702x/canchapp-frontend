@@ -59,7 +59,10 @@ function App() {
           
           {/* 1. Detalle de la cancha */}
           <Route path="/cancha/:id" element={<DetalleCancha />} /> 
-          
+
+          {/* 2. Ruta para dejar una reseña */}
+          <Route path="/cancha/:id/reseñar/:id_reserva" element={<DetalleCancha />} />
+
           {/* 2. Selección de fecha */}
           <Route path="/cancha/:id/reservar" element={<SeleccionFecha />} /> 
           

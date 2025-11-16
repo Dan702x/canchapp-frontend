@@ -1,10 +1,9 @@
 // src/pages/Empresa/MisCanchas.jsx
 
 import React, { useState, useEffect } from 'react';
-import { get, post, put, del } from '../../lib/api';
+import { get, post, put, del } from '../../lib/api'; // ¡Volvemos a usar 'post' normal!
 
 // --- Hook para cargar catálogos (Sedes, Deportes, Superficies) ---
-// (Sin cambios)
 const useCatalogos = () => {
   const [sedes, setSedes] = useState([]);
   const [tiposDeporte, setTiposDeporte] = useState([]);
@@ -36,10 +35,12 @@ const useCatalogos = () => {
 };
 
 
-// --- Modal para Crear/Editar Cancha ---
-// (Sin cambios)
+// --- ¡ESTE ES EL COMPONENTE QUE PEDISTE! ---
+// --- Modal para Crear/Editar Cancha (con 3 URLs) ---
 const CanchaModal = ({ cancha, onClose, onSave, catalogos }) => {
   const { sedes, tiposDeporte, tiposSuperficie } = catalogos;
+  
+  // Estado para los campos de TEXTO
   const [formData, setFormData] = useState({
     id_sede: cancha ? cancha.id_sede : '',
     id_tipo_deporte: cancha ? cancha.id_tipo_deporte : '',
@@ -47,8 +48,11 @@ const CanchaModal = ({ cancha, onClose, onSave, catalogos }) => {
     nombre: cancha ? cancha.nombre : '',
     precio_por_hora: cancha ? (cancha.precio_por_hora || '') : '',
     descripcion: cancha ? (cancha.descripcion || '') : '',
-    foto: cancha ? (cancha.foto || '') : ''
+    foto_url_1: cancha ? (cancha.foto_url_1 || '') : '', // ¡NUEVO!
+    foto_url_2: cancha ? (cancha.foto_url_2 || '') : '', // ¡NUEVO!
+    foto_url_3: cancha ? (cancha.foto_url_3 || '') : ''  // ¡NUEVO!
   });
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
@@ -59,12 +63,12 @@ const CanchaModal = ({ cancha, onClose, onSave, catalogos }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    
     try {
-      let savedCancha;
       if (cancha) { // Editando
-        savedCancha = await put(`/empresa/canchas/${cancha.id_cancha}`, formData);
+        await put(`/empresa/canchas/${cancha.id_cancha}`, formData);
       } else { // Creando
-        savedCancha = await post('/empresa/canchas', formData);
+        await post('/empresa/canchas', formData);
       }
       onSave(); 
     } catch (err) {
@@ -76,10 +80,11 @@ const CanchaModal = ({ cancha, onClose, onSave, catalogos }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white w-full max-w-2xl p-6 rounded-lg shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white w-full max-w-2xl p-6 rounded-lg shadow-xl overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
         <form onSubmit={handleSubmit}>
           <h3 className="text-xl font-bold text-gray-800 mb-6">{cancha ? 'Editar Cancha' : 'Crear Nueva Cancha'}</h3>
           <div className="space-y-4">
+            {/* --- Fila 1 --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <select name="id_sede" value={formData.id_sede} onChange={handleChange} required className="w-full p-2 border border-gray-300 rounded-md">
                 <option value="">-- Selecciona una Sede --</option>
@@ -87,6 +92,7 @@ const CanchaModal = ({ cancha, onClose, onSave, catalogos }) => {
               </select>
               <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Nombre de la Cancha (Ej: Cancha A)" required className="w-full p-2 border border-gray-300 rounded-md" />
             </div>
+            {/* --- Fila 2 --- */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <select name="id_tipo_deporte" value={formData.id_tipo_deporte} onChange={handleChange} required className="w-full p-2 border border-gray-300 rounded-md">
                 <option value="">-- Tipo de Deporte --</option>
@@ -98,9 +104,40 @@ const CanchaModal = ({ cancha, onClose, onSave, catalogos }) => {
               </select>
               <input type="number" step="0.01" name="precio_por_hora" value={formData.precio_por_hora} onChange={handleChange} placeholder="Precio por Hora (Ej: 100.00)" required className="w-full p-2 border border-gray-300 rounded-md" />
             </div>
-            <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} placeholder="Descripción (Opcional)" className="w-full p-2 border border-gray-300 rounded-md" rows="2"></textarea>
-            <input type="text" name="foto" value={formData.foto} onChange={handleChange} placeholder="URL de la Foto (Opcional)" className="w-full p-2 border border-gray-300 rounded-md" />
+            {/* --- Fila 3 (Descripción) --- */}
+            <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} placeholder="Descripción (Obligatorio)" required className="w-full p-2 border border-gray-300 rounded-md" rows="3"></textarea>
+            
+            {/* --- Fila 4 (URLs de Fotos) --- */}
+            <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Fotos (Mínimo 1)</label>
+                <input 
+                    type="text" // Cambiado de 'url' a 'text' para más flexibilidad
+                    name="foto_url_1"
+                    value={formData.foto_url_1}
+                    onChange={handleChange}
+                    placeholder="URL de la Foto Principal (Obligatorio)" 
+                    required 
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                />
+                <input 
+                    type="text" 
+                    name="foto_url_2"
+                    value={formData.foto_url_2}
+                    onChange={handleChange}
+                    placeholder="URL de la Foto 2 (Opcional)" 
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                />
+                <input 
+                    type="text" 
+                    name="foto_url_3"
+                    value={formData.foto_url_3}
+                    onChange={handleChange}
+                    placeholder="URL de la Foto 3 (Opcional)" 
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                />
+            </div>
           </div>
+          
           <div className="flex justify-end gap-3 mt-6">
             <button type="button" onClick={onClose} className="py-2 px-4 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300">
               Cancelar
@@ -154,7 +191,8 @@ const DeleteModal = ({ cancha, onClose, onConfirm }) => {
 };
 
 
-// --- Componente Principal: MisCanchas (ACTUALIZADO) ---
+// --- Componente Principal: MisCanchas ---
+// (La lógica es la misma, solo cambia el renderizado de la tabla)
 const MisCanchas = () => {
   const [canchas, setCanchas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -173,11 +211,9 @@ const MisCanchas = () => {
     try {
       setIsLoading(true);
       setError(null);
-      
       const params = new URLSearchParams();
       if (filtroSede) params.append('sede', filtroSede);
       if (filtroDeporte) params.append('deporte', filtroDeporte);
-      
       const data = await get(`/empresa/canchas?${params.toString()}`);
       setCanchas(data);
     } catch (err) {
@@ -253,7 +289,7 @@ const MisCanchas = () => {
       </div>
 
 
-      {/* --- ¡MODIFICADO! Se eliminaron los wrappers "bg-white", "border", "shadow" y "overflow-x-auto" --- */}
+      {/* --- Tabla --- */}
       <div className="border rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -263,7 +299,6 @@ const MisCanchas = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sede</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Precio X Hora</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-              {/* ¡MODIFICADO! La cabecera de Acciones ahora es visible */}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
             </tr>
           </thead>
@@ -279,46 +314,37 @@ const MisCanchas = () => {
                 <tr key={cancha.id_cancha}>
                   <td className="px-6 py-4">
                     <div className="flex items-center">
-                      <img className="h-10 w-16 object-cover rounded mr-3 flex-shrink-0" src={cancha.foto || 'https://placehold.co/100x75/CCCCCC/FFFFFF?text=Sin+Foto'} alt={cancha.nombre} />
+                      {/* ¡MODIFICADO! Usamos foto_url_1 (que ahora se llama foto_principal) */}
+                      <img className="h-10 w-16 object-cover rounded mr-3 flex-shrink-0" src={cancha.foto_url_1 || 'https://placehold.co/100x75/CCCCCC/FFFFFF?text=Sin+Foto'} alt={cancha.nombre} />
                       <div>
                         <div className="text-sm font-medium text-gray-900">{cancha.nombre}</div>
                         <div className="text-sm text-gray-500">{cancha.tipo_superficie || 'N/A'}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">{cancha.tipo_deporte}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-500">{cancha.nombre_sede}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">S/ {parseFloat(cancha.precio_por_hora || 0).toFixed(2)}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${cancha.estado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                       {cancha.estado ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
-                  {/* ¡MODIFICADO! Se quitó "whitespace-nowrap" y "text-right" y se usó flex-col para apilar en pantallas pequeñas si es necesario */}
                   <td className="px-6 py-4 text-left text-sm font-medium">
-                  <div className="flex flex-col sm:flex-row gap-x-4 gap-y-1">
-
-                  {/* Tu botón de Editar */}
-                  <button onClick={() => setEditingCancha(cancha)} className="text-blue-600 hover:text-blue-900">Editar</button>
-
-                  {/* Tu botón de Desactivar */}
-                  <button onClick={() => handleToggleEstado(cancha)} className={cancha.estado ? "text-yellow-600 hover:text-yellow-900" : "text-green-600 hover:text-green-900"}>
-                  {cancha.estado ? 'Desactivar' : 'Activar'}
-                  </button>
-
-                  {/* ¡AQUÍ ESTÁ EL BOTÓN QUE FALTABA! */}
-                  <button onClick={() => setDeletingCancha(cancha)} className="text-red-600 hover:text-red-900">
-                  Eliminar
-                  </button>
-
-                  </div>
-                </td>
+                    <div className="flex flex-col sm:flex-row gap-x-4 gap-y-1">
+                      <button onClick={() => setEditingCancha(cancha)} className="text-blue-600 hover:text-blue-900">Editar</button>
+                      <button onClick={() => handleToggleEstado(cancha)} className={cancha.estado ? "text-yellow-600 hover:text-yellow-900" : "text-green-600 hover:text-green-900"}>
+                        {cancha.estado ? 'Desactivar' : 'Activar'}
+                      </button>
+                      <button onClick={() => setDeletingCancha(cancha)} className="text-red-600 hover:text-red-900">Eliminar</button>
+                    </div>
+                  </td>
                 </tr>
               ))
             )}
