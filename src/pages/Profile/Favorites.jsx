@@ -5,8 +5,17 @@ import { Link } from 'react-router-dom';
 import { get, del } from '../../lib/api'; // ¡Importa get y del!
 
 // Un componente pequeño para la tarjeta de favorito
-const FavoriteCard = ({ cancha, onRemove }) => (
-  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col sm:flex-row gap-4">
+const FavoriteCard = ({ cancha, onRemove }) => {
+  const isActiva = cancha.estado;
+
+  return (
+  <div className={`relative bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col sm:flex-row gap-4 ${!isActiva ? 'opacity-60' : ''}`}>
+    {!isActiva && (
+      <div className="absolute inset-0 bg-gray-800 bg-opacity-70 flex items-center justify-center z-10 rounded-lg">
+          <span className="text-white font-bold text-lg px-4 py-2 border-2 border-white rounded">En Mantenimiento</span>
+      </div>
+  )}
+
     <img 
       src={cancha.imagen} 
       alt={cancha.nombre}
@@ -26,9 +35,10 @@ const FavoriteCard = ({ cancha, onRemove }) => (
     </div>
     <div className="flex flex-col items-start sm:items-end flex-shrink-0">
       <Link 
-        to={`/cancha/${cancha.id}`} 
-        className="py-2 px-4 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 mb-2 w-full sm:w-auto text-center"
-      >
+  to={`/cancha/${cancha.id}`} 
+  onClick={(e) => !isActiva && e.preventDefault()} // Previene clic
+  className={`py-2 px-4 bg-blue-600 text-white text-sm font-semibold rounded-lg mb-2 w-full sm:w-auto text-center ${!isActiva ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+>
         Reservar
       </Link>
       <button 
@@ -39,7 +49,7 @@ const FavoriteCard = ({ cancha, onRemove }) => (
       </button>
     </div>
   </div>
-);
+)};
 
 
 const Favorites = () => {

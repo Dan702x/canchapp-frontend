@@ -277,15 +277,23 @@ const DetalleCancha = () => {
               {cancha.description}
             </p>
 
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Servicios</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-              {cancha.services.map((service) => (
-                <div key={service.name} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-2xl mr-3">{service.icon}</span>
-                  <span className="text-gray-700">{service.name}</span>
-                </div>
-              ))}
-            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Detalles</h2>
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+  <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+    <span className="text-2xl mr-3">⚽</span>
+    <span className="text-gray-700">
+      <span className="block text-xs text-gray-500">Deporte</span>
+      {cancha.tipo_deporte || 'No especificado'}
+    </span>
+  </div>
+  <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+    <span className="text-2xl mr-3">👟</span>
+    <span className="text-gray-700">
+      <span className="block text-xs text-gray-500">Superficie</span>
+      {cancha.tipo_superficie || 'No especificada'}
+    </span>
+  </div>
+</div>
 
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Reseñas</h2>
             <div className="space-y-6">

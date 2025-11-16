@@ -18,13 +18,22 @@ import PersonalData from './pages/Profile/PersonalData';
 import Reservations from './pages/Profile/Reservations';
 import Security from './pages/Profile/Security';
 
-// 🎯 IMPORTACIONES FINALES DESDE LA SUB-CARPETA DetalleCancha
+// IMPORTACIONES FINALES DESDE LA SUB-CARPETA DetalleCancha
 import ComprobantePago from './pages/DetalleCancha/ComprobantePago';
 import DetalleCancha from './pages/DetalleCancha/DetalleCancha';
 import DetallePago from './pages/DetalleCancha/DetallePago';
 import SeleccionFecha from './pages/DetalleCancha/SeleccionFecha';
 import SeleccionHorario from './pages/DetalleCancha/SeleccionHorario';
 
+// IMPORTACIONES de Empresa y Solicitudes
+import SolicitudEmpresa from './pages/SolicitudEmpresa';
+import GestionEmpresas from './pages/Admin/GestionEmpresas';
+import EmpresaLayout from './pages/Empresa/EmpresaLayout';
+import MisSedes from './pages/Empresa/MisSedes';
+import MisCanchas from './pages/Empresa/MisCanchas';
+import MiSolicitud from './pages/Empresa/MiSolicitud';
+import DatosEmpresa from './pages/Empresa/DatosEmpresa';
+import EliminarNegocio from './pages/Empresa/EliminarNegocio';
 
 function App() {
   return (
@@ -67,6 +76,23 @@ function App() {
           
           {/* 6. Confirmación de reserva (Mantenida) */}
           <Route path="/reservar/confirmacion-final" element={<ConfirmacionFinal />} />
+
+          {/* 7. Solicitar ser una empresa */}
+          <Route path="/soy-empresa" element={<SolicitudEmpresa />} />
+
+          {/* 8. Panel de administrador para ver gestion de empresa */}
+          <Route path="/admin/empresas" element={<GestionEmpresas />} />
+
+          {/* 9. AÑADE LAS RUTAS DE "MI NEGOCIO" */}
+          <Route path="/mi-negocio" element={<EmpresaLayout />}>
+            <Route path="datos" element={<DatosEmpresa />} />
+            <Route path="sedes" element={<MisSedes />} />
+            <Route path="canchas" element={<MisCanchas />} />
+            <Route path="eliminar" element={<EliminarNegocio />} />
+          </Route>
+
+          {/* 10. Revisar el estado de mi solicitud */}
+          <Route path="/mi-solicitud" element={<MiSolicitud />} />
 
           {/* Rutas de Perfil (Anidadas) */}
           <Route path="/perfil" element={<ProfileLayout />}>

@@ -33,7 +33,48 @@ const DetallePago = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+
+        // Campos que DEBEN ser solo numéricos
+        // ¡Quitamos 'expiryDate' de esta lista!
+        const numericFields = ['cardNumber', 'cvv', 'documentId', 'phone'];
+        
+        // Campos que DEBEN ser solo letras y espacios (para el nombre)
+        const textFields = ['fullName'];
+
+        if (numericFields.includes(name)) {
+            // Reemplaza cualquier cosa que NO sea un dígito con un string vacío
+            const numericValue = value.replace(/[^0-9]/g, '');
+            setFormData(prev => ({ ...prev, [name]: numericValue }));
+        } 
+        else if (textFields.includes(name)) {
+            // Reemplaza cualquier cosa que NO sea una letra, espacio o tilde
+            const textValue = value.replace(/[^a-zA-Z\sñÑáéíóúÁÉÍÓÚ]/g, '');
+            setFormData(prev => ({ ...prev, [name]: textValue }));
+        } 
+        // --- ¡AQUÍ ESTÁ LA NUEVA LÓGICA! ---
+        else if (name === 'expiryDate') {
+            // 1. Solo permitimos números
+            let numericValue = value.replace(/[^0-9]/g, '');
+            let formattedValue = numericValue;
+
+            // 2. Si el usuario está borrando el "/", permitimos que lo haga
+            if (value.length < formData.expiryDate.length && value.endsWith('/')) {
+                // No hacer nada, dejar que el 'else' de abajo maneje el valor
+            }
+            // 3. Si tiene más de 2 dígitos, insertamos el "/"
+            else if (numericValue.length > 2) {
+                formattedValue = `${numericValue.slice(0, 2)}/${numericValue.slice(2, 4)}`;
+            }
+            // 4. Aseguramos que solo tenga 5 caracteres (MM/AA)
+            formattedValue = formattedValue.slice(0, 5);
+
+            setFormData(prev => ({ ...prev, [name]: formattedValue }));
+        }
+        // --- FIN DE LA NUEVA LÓGICA ---
+        else {
+            // Para el resto (email), deja el valor como está
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const validateForm = () => {
@@ -135,6 +176,7 @@ const DetallePago = () => {
                                     id="cardNumber"
                                     name="cardNumber"
                                     maxLength="16"
+                                    inputMode="numeric" // <-- AÑADE
                                     value={formData.cardNumber}
                                     onChange={handleChange}
                                     placeholder="XXXX XXXX XXXX XXXX"
@@ -164,6 +206,7 @@ const DetallePago = () => {
                                         id="cvv"
                                         name="cvv"
                                         maxLength="4"
+                                        inputMode="numeric" // <-- AÑADE
                                         value={formData.cvv}
                                         onChange={handleChange}
                                         placeholder="123"
@@ -199,6 +242,7 @@ const DetallePago = () => {
                                     type="text"
                                     id="documentId"
                                     name="documentId"
+                                    inputMode="numeric"
                                     value={formData.documentId}
                                     onChange={handleChange}
                                     className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
@@ -232,6 +276,8 @@ const DetallePago = () => {
                                     type="tel" 
                                     id="phone"
                                     name="phone"
+                                    inputMode="numeric"
+                                    maxLength="9"
                                     value={formData.phone}
                                     onChange={handleChange}
                                     className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"

@@ -25,51 +25,101 @@ const Inicio = () => {
   const [isLoadingCanchas, setIsLoadingCanchas] = useState(true);
   const [error, setError] = useState(null);
 
-  // NUEVO: useEffect para cargar las canchas desde el backend
+  const [filtroUbicacion, setFiltroUbicacion] = useState('');
+  const [filtroDeporte, setFiltroDeporte] = useState('');
+  const [tiposDeporte, setTiposDeporte] = useState([]);
+
+
+// ¡NUEVO! Cargar tipos de deporte para el filtro
   useEffect(() => {
-    const fetchCanchas = async () => {
+    const fetchTiposDeporte = async () => {
       try {
-        setIsLoadingCanchas(true);
-        setError(null);
-        // Llama al endpoint del backend: GET /api/canchas
-        const data = await get('/canchas');
-        setCanchas(data); // Guarda los datos de la BD en el estado
+        const data = await get('/catalogos/tipos-deporte');
+        setTiposDeporte(data);
       } catch (err) {
-        console.error("Error al cargar canchas:", err);
-        setError("No se pudieron cargar las canchas. Asegúrate de que el backend (puerto 8080) esté funcionando.");
-      } finally {
-        setIsLoadingCanchas(false);
+        console.error("Error al cargar tipos de deporte:", err);
       }
     };
+    fetchTiposDeporte();
+  }, []);
 
-    fetchCanchas(); // Ejecuta la función al cargar la página
-  }, []); // El array vacío [] asegura que solo se ejecute una vez
+  // NUEVO: useEffect para cargar las canchas desde el backend
+useEffect(() => {
+  const fetchCanchas = async () => {
+    try {
+      setIsLoadingCanchas(true);
+      setError(null);
 
-  // Función que simula la obtención de la ubicación del usuario
-  const handleUseLocation = () => {
-    console.log("Simulando obtención de ubicación...");
-    setIsLoadingLocation(true);
+      // ¡NUEVO! Construye la query con los filtros
+      const params = new URLSearchParams();
+      if (filtroUbicacion) params.append('ubicacion', filtroUbicacion);
+      if (filtroDeporte) params.append('deporte', filtroDeporte);
 
-    setTimeout(() => {
-      const simulatedUserLocation = { lat: -12.1190, lng: -77.0311 };
-
-      // USA 'canchas' (del estado) en lugar de 'canchasRecomendadas'
-      const canchasConDistancia = canchas.map(cancha => {
-        const distancia = calculateFakeDistance(simulatedUserLocation, { lat: cancha.lat, lng: cancha.lng });
-        return {
-          ...cancha,
-          distancia: parseFloat(distancia),
-        };
-      });
-
-      canchasConDistancia.sort((a, b) => a.distancia - b.distancia);
-
-      setCanchas(canchasConDistancia);
-      setIsLoadingLocation(false);
-      console.log("Ubicación simulada obtenida y distancias calculadas.");
-    }, 1000);
+      const data = await get(`/canchas?${params.toString()}`);
+      setCanchas(data); 
+    } catch (err) {
+      console.error("Error al cargar canchas:", err);
+      setError("No se pudieron cargar las canchas. Asegúrate de que el backend (puerto 8080) esté funcionando.");
+    } finally {
+      setIsLoadingCanchas(false);
+    }
   };
 
+  fetchCanchas();
+}, [filtroUbicacion, filtroDeporte]);
+
+  // ¡NUEVA FUNCIÓN! Pide la ubicación real al navegador
+  const handleUseLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Tu navegador no soporta geolocalización.");
+      return;
+    }
+
+    setIsLoadingLocation(true);
+    
+    // 1. Pide la ubicación al navegador
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        // ¡Éxito!
+        const userLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        
+        console.log("Ubicación real obtenida:", userLocation);
+
+        // 2. Calcula la distancia (usando tu función existente)
+        const canchasConDistancia = canchas.map(cancha => {
+          // Ignora canchas que no tienen coordenadas
+          if (!cancha.lat || !cancha.lng) {
+            return { ...cancha, distancia: null };
+          }
+          
+          const distancia = calculateFakeDistance(userLocation, { lat: cancha.lat, lng: cancha.lng });
+          return {
+            ...cancha,
+            distancia: parseFloat(distancia),
+          };
+        });
+
+        // 3. Ordena las canchas
+        canchasConDistancia.sort((a, b) => {
+          if (a.distancia === null) return 1; // Manda las nulas al final
+          if (b.distancia === null) return -1;
+          return a.distancia - b.distancia;
+        });
+
+        setCanchas(canchasConDistancia);
+        setIsLoadingLocation(false);
+      },
+      (error) => {
+        // ¡Error! (Usuario denegó el permiso, etc.)
+        console.error("Error al obtener ubicación:", error);
+        alert("No se pudo obtener tu ubicación. Asegúrate de dar permisos.");
+        setIsLoadingLocation(false);
+      }
+    );
+  };
 
   return (
     <div>
@@ -87,6 +137,12 @@ const Inicio = () => {
       <Buscador 
         onUseLocation={handleUseLocation}
         isLoading={isLoadingLocation}
+        tiposDeporte={tiposDeporte}
+        filtroUbicacion={filtroUbicacion}
+        setFiltroUbicacion={setFiltroUbicacion}
+        filtroDeporte={filtroDeporte}
+        setFiltroDeporte={setFiltroDeporte}
+
       />
 
       {/* Sección de Recomendados (HU-013) */}
@@ -116,6 +172,8 @@ const Inicio = () => {
               imagen={cancha.imagen}
               distancia={cancha.distancia}
               is_favorito={cancha.is_favorito}
+              estado={cancha.estado}
+              tipo_deporte={cancha.tipo_deporte}
             />
           ))}
         </div>

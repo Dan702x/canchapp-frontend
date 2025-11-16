@@ -176,7 +176,7 @@ const PersonalData = () => {
               className="h-4 w-4 text-blue-600 border-gray-300 rounded disabled:bg-gray-100"
             />
             <span className="ml-2 text-sm text-gray-700">
-              Deseo recibir recordatorios de mis reservas por correo (HU-022)
+              Deseo recibir recordatorios de mis reservas por correo
             </span>
           </label>
         </div>

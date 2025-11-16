@@ -4,12 +4,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { get, put } from '../../lib/api';
 import ModalModificarReserva from '../../components/ModalModificarReserva'; 
-// ¡AÑADE ESTAS LÍNEAS!
 import ModalCompartirReserva from '../../components/ModalCompartirReserva'; 
 import { FaShareAlt } from 'react-icons/fa'; // Icono para compartir
 
 // --- Componente de Tarjeta de Reserva (para no repetir código) ---
-const ReservationCard = ({ reserva, onCancelar, onModificar, onCompartir, onDejarReseña }) => {
+const ReservationCard = ({ reserva, onCancelar, onModificar, onCompartir, onDejarReseña, onPagarAhora }) => {
   
   const formattedDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -74,7 +73,7 @@ const ReservationCard = ({ reserva, onCancelar, onModificar, onCompartir, onDeja
          {reserva.estado === 'pendiente' && (
           <>
              <button 
-              onClick={() => alert("Completa el pago para confirmar esta reserva.")} 
+              onClick={() => onPagarAhora(reserva)}
               className="font-medium text-yellow-600 hover:text-yellow-800"
             >
               Pagar ahora
@@ -193,6 +192,28 @@ const Reservations = () => {
     fetchReservas(); 
   };
 
+// ¡NUEVA FUNCIÓN!
+const handlePagarAhora = (reserva) => {
+  // Formateamos los datos que necesita la página de pago
+  const fecha = new Date(reserva.fecha_hora_inicio).toLocaleDateString('es-ES', { 
+    weekday: 'long', day: 'numeric', month: 'long' 
+  });
+  const hora = new Date(reserva.fecha_hora_inicio).toLocaleTimeString('es-ES', { 
+    hour: '2-digit', minute: '2-digit' 
+  });
+
+  // Navegamos a la pasarela de pago CON el estado
+  navigate('/reservar/pago', {
+    state: {
+      id_reserva: reserva.id_reserva,
+      monto: parseFloat(reserva.precio_total),
+      canchaNombre: reserva.cancha_nombre,
+      fecha: fecha,
+      hora: hora
+    }
+  });
+};
+
   // ¡NUEVO! Funciones del modal de Compartir
   const handleOpenShareModal = (reserva) => {
     setSharingReserva(reserva);
@@ -261,6 +282,7 @@ const Reservations = () => {
                 onModificar={handleOpenEditModal}
                 onCompartir={handleOpenShareModal}
                 onDejarReseña={handleDejarReseña}
+                onPagarAhora={handlePagarAhora}
               />
             ))
           )}

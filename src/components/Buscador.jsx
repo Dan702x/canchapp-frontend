@@ -2,14 +2,36 @@ import React from 'react';
 import { FaMapMarkerAlt, FaFutbol, FaSpinner } from 'react-icons/fa';
 import PropTypes from 'prop-types';
 
-const Buscador = ({ onUseLocation, isLoading }) => {
+// Lista de distritos de Lima
+const distritosLima = [
+  "Ancón", "Ate", "Barranco", "Breña", "Carabayllo", "Chaclacayo", "Chorrillos", "Cieneguilla",
+  "Comas", "El Agustino", "Independencia", "Jesús María", "La Molina", "La Victoria", "Lince",
+  "Los Olivos", "Lurigancho-Chosica", "Lurín", "Magdalena del Mar", "Miraflores", "Pachacámac",
+  "Pucusana", "Pueblo Libre", "Puente Piedra", "Punta Hermosa", "Punta Negra", "Rímac",
+  "San Bartolo", "San Borja", "San Isidro", "San Juan de Lurigancho", "San Juan de Miraflores",
+  "San Luis", "San Martín de Porres", "San Miguel", "Santa Anita", "Santa María del Mar",
+  "Santa Rosa", "Santiago de Surco", "Surquillo", "Villa El Salvador", "Villa María del Triunfo"
+];
+
+// --- ¡ESTA ES LA LÍNEA CORREGIDA! ---
+// Ahora aceptamos todas las nuevas props que vienen desde Inicio.jsx
+const Buscador = ({ 
+  onUseLocation, 
+  isLoading,
+  tiposDeporte,
+  filtroUbicacion,
+  setFiltroUbicacion,
+  filtroDeporte,
+  setFiltroDeporte
+}) => {
   return (
     <div className="bg-white shadow-lg rounded-lg p-6 md:p-8 max-w-4xl mx-auto -mt-16 relative z-10">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
         Encuentra tu cancha favorita
       </h2>
       
-      <form>
+      {/* Este es el formulario que ya actualizaste, ahora funcionará */}
+      <form onSubmit={(e) => e.preventDefault()}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           
           <div className="flex flex-col">
@@ -19,12 +41,11 @@ const Buscador = ({ onUseLocation, isLoading }) => {
             <select 
               id="ubicacion" 
               className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={filtroUbicacion}
+              onChange={(e) => setFiltroUbicacion(e.target.value)}
             >
               <option value="">Todos los distritos</option>
-              <option value="miraflores">Miraflores</option>
-              <option value="surco">Surco</option>
-              <option value="la-molina">La Molina</option>
-              <option value="san-isidro">San Isidro</option>
+              {distritosLima.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
 
@@ -35,24 +56,26 @@ const Buscador = ({ onUseLocation, isLoading }) => {
             <select 
               id="deporte" 
               className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={filtroDeporte}
+              onChange={(e) => setFiltroDeporte(e.target.value)}
             >
               <option value="">Todos los deportes</option>
-              <option value="futbol">Fútbol</option>
-              <option value="basket">Basket</option>
-              <option value="tenis">Tenis</option>
-              <option value="voley">Vóley</option>
+              {tiposDeporte.map(d => (
+                <option key={d.id_tipo_deporte} value={d.id_tipo_deporte}>
+                  {d.nombre}
+                </option>
+              ))}
             </select>
           </div>
         
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 max-w-lg mx-auto">
-          
+        <div className="flex justify-center mt-6">
           <button
             type="button"
             onClick={onUseLocation}
             disabled={isLoading}
-            className="flex items-center justify-center p-3 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 transition duration-300 text-sm font-semibold disabled:opacity-50 disabled:cursor-wait w-full"
+            className="flex items-center justify-center p-3 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 transition duration-300 text-sm font-semibold disabled:opacity-50 disabled:cursor-wait w-full max-w-xs"
           >
             {isLoading ? (
               <FaSpinner className="animate-spin mr-2" />
@@ -64,13 +87,6 @@ const Buscador = ({ onUseLocation, isLoading }) => {
             )}
             {isLoading ? 'Localizando...' : 'Usar mi ubicación'}
           </button>
-
-          <button 
-            type="submit"
-            className="bg-blue-600 text-white font-bold p-3 rounded-lg hover:bg-blue-700 transition duration-300 w-full"
-          >
-            Buscar
-          </button>
         </div>
         
       </form>
@@ -78,9 +94,15 @@ const Buscador = ({ onUseLocation, isLoading }) => {
   );
 };
 
+// --- ¡TAMBIÉN CORREGIMOS LOS PROPTYPES! ---
 Buscador.propTypes = {
   onUseLocation: PropTypes.func.isRequired,
   isLoading: PropTypes.bool.isRequired,
+  tiposDeporte: PropTypes.array.isRequired,
+  filtroUbicacion: PropTypes.string.isRequired,
+  setFiltroUbicacion: PropTypes.func.isRequired,
+  filtroDeporte: PropTypes.string.isRequired,
+  setFiltroDeporte: PropTypes.func.isRequired,
 };
 
 export default Buscador;

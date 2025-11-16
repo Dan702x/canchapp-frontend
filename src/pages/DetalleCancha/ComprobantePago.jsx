@@ -1,9 +1,8 @@
 // src/pages/DetalleCancha/ComprobantePago.jsx
 
 import { Link, useNavigate, useLocation } from 'react-router-dom'; // CAMBIO: Importa useLocation
-
-// CAMBIO: Eliminamos los datos simulados
-// const simulatedReceiptData = { ... };
+import { useState } from 'react'; // <-- AÑADE
+import { post } from '../../lib/api'; // <-- AÑADE
 
 // Componente para el ícono de verificación
 const IconCheckSquare = () => (
@@ -16,6 +15,8 @@ const ComprobantePago = () => {
     const navigate = useNavigate();
     const location = useLocation(); // CAMBIO: Hook para leer el estado
 
+    const [isSending, setIsSending] = useState(false);
+
     // CAMBIO: Recupera los datos del comprobante pasados desde DetallePago
     const data = location.state || {
         cancha: 'Cancha (Error)',
@@ -25,6 +26,24 @@ const ComprobantePago = () => {
         monto: 0.00,
         operacion: 'Error-000',
     };
+    
+    const API_URL = import.meta.env.VITE_API || 'http://localhost:8080/api';
+
+    const handleSendEmail = async () => {
+        if (!data.id_reserva) {
+            alert("Error: No se encontró ID de reserva.");
+            return;
+        }
+        setIsSending(true);
+        try {
+            const response = await post(`/reservas/${data.id_reserva}/enviar-comprobante`, {});
+            alert(response.mensaje);
+        } catch (err) {
+            alert(`Error al enviar el correo: ${err.message}`);
+        } finally {
+            setIsSending(false);
+        }
+    }
 
     return (
         <div className="bg-gray-50 min-h-screen flex items-center justify-center py-10 px-4">
@@ -52,17 +71,28 @@ const ComprobantePago = () => {
                 
                 {/* Botones de Acción (Simulados por ahora) */}
                 <div className="space-y-4 mb-10 border-b pb-6">
-                    <div className="flex justify-center">
-                        <button className="py-3 px-8 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-300 transition duration-200">
-                            Descargar comprobante
-                        </button>
-                    </div>
-                    <div className="flex justify-center">
-                        <button className="py-3 px-8 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-300 transition duration-200">
-                            Enviar a mi correo
-                        </button>
-                    </div>
-                </div>
+                    {/* --- ¡BOTÓN DE DESCARGA (AHORA ES UN ENLACE)! --- */}
+    <div className="flex justify-center">
+        <a 
+            href={`${API_URL}/reservas/${data.id_reserva}/comprobante-pdf`}
+            download
+            className="py-3 px-8 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-300 transition duration-200 text-center"
+        >
+            Descargar comprobante
+        </a>
+    </div>
+
+    {/* --- ¡BOTÓN DE ENVIAR CORREO (AHORA FUNCIONA)! --- */}
+    <div className="flex justify-center">
+        <button 
+            onClick={handleSendEmail}
+            disabled={isSending}
+            className="py-3 px-8 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-300 transition duration-200 disabled:opacity-50"
+        >
+            {isSending ? 'Enviando...' : 'Enviar a mi correo'}
+        </button>
+    </div>
+</div>
 
                 {/* Botones de Navegación Final */}
                 <div className="flex justify-between">

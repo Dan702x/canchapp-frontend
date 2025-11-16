@@ -1,8 +1,6 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
-// ¡Ya no necesitamos 'js-cookie' aquí!
-// import Cookies from 'js-cookie'; 
-import { get, post } from '../lib/api'; // Importamos 'get' y 'post'
+import { get, post } from '../lib/api';
 
 const AuthContext = createContext(null);
 
@@ -19,7 +17,6 @@ export const AuthProvider = ({ children }) => {
   // Función para Cerrar Sesión
   const logout = async () => {
     try {
-      // ¡NUEVO! Llama al backend para que destruya la cookie
       await post('/logout', {}); 
     } catch (err) {
       console.error("Error al cerrar sesión en el backend:", err);
@@ -28,34 +25,37 @@ export const AuthProvider = ({ children }) => {
     }
   };
   
-  // ¡CORREGIDO! Este es el cambio principal.
+  // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+  // 1. Definimos la función para recargar el perfil FUERA del useEffect
+  const refreshUser = async () => {
+    try {
+      const userData = await get('/profile'); 
+      setUser(userData); // Si esto tiene éxito, estamos logueados
+    } catch (err) {
+      console.log("No hay sesión activa.");
+      setUser(null);
+    }
+  };
+
+  // 2. El useEffect ahora solo llama a la función
   useEffect(() => {
-    const checkUserSession = async () => {
-      try {
-        // No intentes leer la cookie. Solo pregunta al backend.
-        // El navegador enviará la cookie HttpOnly automáticamente.
-        const userData = await get('/profile'); 
-        setUser(userData); // Si esto tiene éxito, ¡estamos logueados!
-      } catch (err) {
-        // Si falla (error 401), significa que no hay sesión.
-        console.log("No hay sesión activa.");
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    checkUserSession();
+    const checkSessionOnLoad = async () => {
+      await refreshUser();
+      setIsLoading(false); // Marcamos como cargado después del primer chequeo
+    }
+    checkSessionOnLoad();
   }, []);
+  // --- FIN DE LA CORRECCIÓN ---
+
 
   // Muestra un "cargando" mientras verifica la sesión
   if (isLoading) {
-    // Puedes poner un spinner bonito aquí si quieres
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Cargando...</div>;
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    // 3. Pasamos la función refreshUser al contexto
+    <AuthContext.Provider value={{ user, login, logout, isLoading, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

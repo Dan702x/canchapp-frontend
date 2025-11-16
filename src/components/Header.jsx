@@ -70,6 +70,24 @@ const Header = () => {
             {user ? (
               // --- VISTA "LOGUEADO" ---
               <>
+                {/* --- ¡NUEVO! ENLACE DE ADMIN --- */}
+                {user.id_rol === 2 && (
+                  <Link to="/admin/empresas" className="font-medium text-red-600 hover:text-red-800">
+                    Panel Admin
+                  </Link>
+                )}
+                {/* --- FIN ENLACE DE ADMIN --- */}
+
+                {/* --- LÓGICA DE EMPRESA --- */}
+                {user.empresa_estado === 'activo' ? (
+                  <Link to="/mi-negocio/sedes" className="text-green-600 hover:text-green-800 font-medium">Mi Negocio</Link>
+                ) : user.empresa_estado === 'pendiente' || user.empresa_estado === 'rechazado' ? (
+                  <Link to="/mi-solicitud" className="text-yellow-600 hover:text-yellow-800 font-medium">Ver Solicitud</Link>
+                ) : (
+                  <Link to="/soy-empresa" className="text-green-600 hover:text-green-800 font-medium">¿Tienes una cancha?</Link>
+                )}
+                {/* --- FIN LÓGICA DE EMPRESA --- */}
+
                 <span className="text-gray-700 font-medium">
                   Hola, {user.first_name || 'Usuario'}
                 </span>
@@ -181,6 +199,26 @@ const Header = () => {
               {user ? (
                 // --- VISTA "LOGUEADO" (Móvil) ---
                 <>
+                  {/* --- ¡NUEVO! ENLACE DE ADMIN --- */}
+                  {user.id_rol === 2 && (
+                    <Link to="/admin/empresas" className="block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50" onClick={() => setIsMobileMenuOpen(false)}>
+                      Panel Admin
+                    </Link>
+                  )}
+                  {/* --- FIN ENLACE DE ADMIN --- */}
+
+                  {/* --- LÓGICA DE EMPRESA (Móvil) --- */}
+                  {user.empresa_estado === 'activo' ? (
+                    <Link to="/mi-negocio/sedes" className="block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50" onClick={() => setIsMobileMenuOpen(false)}>Mi Negocio</Link>
+                  ) : user.empresa_estado === 'pendiente' || user.empresa_estado === 'rechazado' ? (
+                    <Link to="/mi-solicitud" className="block px-3 py-2 rounded-md text-base font-medium text-yellow-600 hover:bg-yellow-50" onClick={() => setIsMobileMenuOpen(false)}>Ver Solicitud</Link>
+                  ) : (
+                    <Link to="/soy-empresa" className="block px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50" onClick={() => setIsMobileMenuOpen(false)}>¿Tienes una cancha?</Link>
+                  )}
+                  {/* --- FIN LÓGICA DE EMPRESA --- */}
+
+                  <div className="border-t border-gray-200 !mt-4 !mb-2"></div>
+
                   <Link to="/perfil/datos" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50" onClick={() => setIsMobileMenuOpen(false)}>Datos personales</Link>
                   <Link to="/perfil/favoritos" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50" onClick={() => setIsMobileMenuOpen(false)}>Mis favoritos</Link>
                   <Link to="/perfil/reservas" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50" onClick={() => setIsMobileMenuOpen(false)}>Mis reservas</Link>
