@@ -45,6 +45,38 @@ const ComprobantePago = () => {
         }
     }
 
+    // 1. Agrega esta función antes del return
+const handleDownloadPDF = async () => {
+    try {
+        // Hacemos el fetch con credenciales
+        const response = await fetch(`${API_URL}/reservas/${data.id_reserva}/comprobante-pdf`, {
+            method: 'GET',
+            headers: {
+                // A veces ayuda ser explícito, aunque la cookie es lo importante
+            },
+            credentials: 'include' // ¡CRUCIAL! Esto envía la cookie
+        });
+
+        if (!response.ok) throw new Error("Error al descargar");
+
+        // Convertimos la respuesta a un Blob (archivo)
+        const blob = await response.blob();
+        
+        // Creamos un enlace temporal para descargarlo
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `comprobante_canchapp_${data.id_reserva}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+    } catch (err) {
+        alert("No se pudo descargar el comprobante. Tu sesión podría haber expirado.");
+    }
+};
+
     return (
         <div className="bg-gray-50 min-h-screen flex items-center justify-center py-10 px-4">
             <div className="max-w-xl w-full p-8 bg-white rounded-lg shadow-2xl">
@@ -73,13 +105,12 @@ const ComprobantePago = () => {
                 <div className="space-y-4 mb-10 border-b pb-6">
                     {/* --- ¡BOTÓN DE DESCARGA (AHORA ES UN ENLACE)! --- */}
     <div className="flex justify-center">
-        <a 
-            href={`${API_URL}/reservas/${data.id_reserva}/comprobante-pdf`}
-            download
+        <button 
+            onClick={handleDownloadPDF}
             className="py-3 px-8 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-300 transition duration-200 text-center"
         >
             Descargar comprobante
-        </a>
+        </button>
     </div>
 
     {/* --- ¡BOTÓN DE ENVIAR CORREO (AHORA FUNCIONA)! --- */}
