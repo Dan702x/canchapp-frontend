@@ -40,6 +40,23 @@ const SeleccionHorario = () => {
 
     const allTimeSlots = generateTimeSlots();
 
+    const now = new Date();
+    const currentHour = now.getHours(); // Ej: si son las 12:48, esto devuelve 12
+
+    // Verificamos si la fecha seleccionada en el calendario es "HOY"
+    // (Comparamos día, mes y año para estar seguros)
+    const isToday = selectedDate && 
+                    selectedDate.getDate() === now.getDate() &&
+                    selectedDate.getMonth() === now.getMonth() &&
+                    selectedDate.getFullYear() === now.getFullYear();
+
+    // Función auxiliar para saber si un slot ya pasó
+    const isSlotPast = (slot) => {
+        if (!isToday) return false; // Si es mañana u otro día, no bloqueamos por hora
+        const slotHour = parseInt(slot.split(':')[0], 10); // "09:00" -> 9
+        // Si la hora del slot es menor o igual a la hora actual, ya pasó.
+        return slotHour <= currentHour;
+    };
 
     // NUEVO: useEffect para cargar datos de la cancha y disponibilidad
     useEffect(() => {
@@ -92,60 +109,58 @@ const SeleccionHorario = () => {
 
 
     // CAMBIO: Lógica de selección AHORA USA 'availability'
-    const handleSlotClick = (slot) => {
-        setMessage(null);
-        
-        const clickedIdx = getSlotIndex(slot);
-        const nextSlot = allTimeSlots[clickedIdx + 1];
-        
-        // CAMBIO: usa availability
-        if (availability[slot] === 'occupied' || !nextSlot) {
-            setMessage({ type: 'error', text: 'Esta hora no está disponible.' });
-            setStartSlot(null);
-            setEndSlot(null);
-            return;
-        }
+const handleSlotClick = (slot) => {
+        setMessage(null);
+        
+        const clickedIdx = getSlotIndex(slot);
+        const nextSlot = allTimeSlots[clickedIdx + 1];
+        
+        // --- AQUÍ AGREGAMOS LA VALIDACIÓN isSlotPast(slot) ---
+        if (availability[slot] === 'occupied' || isSlotPast(slot) || !nextSlot) {
+            setMessage({ type: 'error', text: 'Esta hora no está disponible.' });
+            setStartSlot(null);
+            setEndSlot(null);
+            return;
+        }
 
-        if (startSlot === slot) {
-            setStartSlot(null);
-            setEndSlot(null);
-            return;
-        }
+        if (startSlot === slot) {
+            setStartSlot(null);
+            setEndSlot(null);
+            return;
+        }
 
-        if (!startSlot) {
-            // CAMBIO: usa availability
-            if (availability[nextSlot] === 'occupied') {
-                 setMessage({ type: 'error', text: 'La reserva mínima de 1 hora no puede completarse en esta hora.' });
+        if (!startSlot) {
+            // --- AQUÍ TAMBIÉN VALIDAMOS EL SIGUIENTE SLOT ---
+            if (!nextSlot) {
+                 setMessage({ type: 'error', text: 'La reserva mínima de 1 hora no puede completarse al cierre.' });
                  return;
             }
-            setStartSlot(slot);
-            setEndSlot(nextSlot); 
-            return;
-        }
+            setStartSlot(slot);
+            setEndSlot(nextSlot); 
+            return;
+        }
         
-        // ... (Tu lógica de rango se mantiene)
-        const startIdx = getSlotIndex(startSlot);
-        const endReferenceIdx = clickedIdx;
+        // ... (resto de tu lógica de rangos se mantiene igual) ...
+        const startIdx = getSlotIndex(startSlot);
+        const endReferenceIdx = clickedIdx;
+        const newStartIdx = Math.min(startIdx, endReferenceIdx);
+        const newEndIdx = Math.max(startIdx, endReferenceIdx);
+        const reservationEndSlot = allTimeSlots[newEndIdx + 1]; 
         
-        const newStartIdx = Math.min(startIdx, endReferenceIdx);
-        const newEndIdx = Math.max(startIdx, endReferenceIdx);
-
-        const reservationEndSlot = allTimeSlots[newEndIdx + 1]; 
-        
-        if (!reservationEndSlot) {
-             setMessage({ type: 'error', text: 'El rango seleccionado excede la hora de cierre (23:00).' });
+        if (!reservationEndSlot) {
+             setMessage({ type: 'error', text: 'El rango seleccionado excede la hora de cierre.' });
              return;
-        }
+        }
         
-        // CAMBIO: usa availability
-        for (let i = newStartIdx; i <= newEndIdx; i++) {
-            if (availability[allTimeSlots[i]] === 'occupied') {
-                setMessage({ type: 'error', text: 'El rango seleccionado incluye horarios ocupados.' });
-                setStartSlot(null);
-                setEndSlot(null);
-                return;
-            }
-        }
+        for (let i = newStartIdx; i <= newEndIdx; i++) {
+            // --- VALIDAMOS EL RANGO TAMBIÉN ---
+            if (availability[allTimeSlots[i]] === 'occupied' || isSlotPast(allTimeSlots[i])) {
+                setMessage({ type: 'error', text: 'El rango seleccionado incluye horarios no disponibles.' });
+                setStartSlot(null);
+                setEndSlot(null);
+                return;
+            }
+        }
         
         const newDurationSlots = newEndIdx - newStartIdx + 1;
         if (newDurationSlots < 1) { 
@@ -167,25 +182,31 @@ const SeleccionHorario = () => {
             return "hidden"; 
         }
 
-        const status = availability[slot] || 'unavailable'; // CAMBIO
-        let classes = "py-2 px-3 rounded text-sm font-medium transition-colors cursor-pointer ";
-        
+        const status = availability[slot] || 'unavailable';
+        let classes = "py-2 px-3 rounded text-sm font-medium transition-colors cursor-pointer ";
+        
         const startIdx = startSlot ? getSlotIndex(startSlot) : -1;
         const endIdx = endSlot ? getSlotIndex(endSlot) : -1;
         
         const isWithinSelection = startSlot && endSlot && slotIdx >= startIdx && slotIdx < endIdx;
+        
+        // --- AQUÍ USAMOS LA VARIABLE ---
+        const isPast = isSlotPast(slot);
 
-        if (status === 'occupied') {
-            classes += "bg-red-500 text-white cursor-not-allowed line-through shadow-md"; 
-        } else if (isWithinSelection) {
-            classes += "bg-green-600 text-white shadow-lg ring-2 ring-green-700"; 
-        } else if (status === 'available') {
-            classes += "bg-green-100 text-green-700 hover:bg-green-200 border border-green-200"; 
-        } else {
-            classes += "bg-gray-100 text-gray-500 cursor-not-allowed border border-gray-200"; 
-        }
-        return classes;
-    };
+        if (status === 'occupied') {
+            classes += "bg-red-500 text-white cursor-not-allowed line-through shadow-md"; 
+        } else if (isPast) { 
+            // --- NUEVO ESTILO PARA HORAS PASADAS (Igual al deshabilitado) ---
+            classes += "bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300"; 
+        } else if (isWithinSelection) {
+            classes += "bg-green-600 text-white shadow-lg ring-2 ring-green-700"; 
+        } else if (status === 'available') {
+            classes += "bg-green-100 text-green-700 hover:bg-green-200 border border-green-200"; 
+        } else {
+            classes += "bg-gray-100 text-gray-500 cursor-not-allowed border border-gray-200"; 
+        }
+        return classes;
+    };
 
     // CAMBIO: Función para avanzar a la CONFIRMACIÓN FINAL (HU-016)
     const handleConfirmReservation = async () => {
