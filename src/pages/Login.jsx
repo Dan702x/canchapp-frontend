@@ -1,13 +1,14 @@
 // src/pages/Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaFutbol } from 'react-icons/fa';
+import { FaFutbol, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { post } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -96,19 +97,30 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-          <div>
+          <div className="relative">
             <label htmlFor="password" className="sr-only">Contraseña</label>
             <input
               id="password"
               name="password"
-              type="password"
+              // CAMBIO 1: El tipo depende del estado
+              type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               required
-              className="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              // CAMBIO 2: Añadimos 'pr-10' al final para que el texto no tape el ícono
+              className="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm pr-10"
               placeholder="Contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            
+            {/* CAMBIO 3: Botón del ojito posicionado a la derecha */}
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none z-20"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
           </div>
           <div className="flex items-center justify-end">
             <div className="text-sm">

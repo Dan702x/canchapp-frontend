@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaFutbol } from 'react-icons/fa';
+import { FaFutbol, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { post } from '../lib/api'; // Importamos la función 'post'
 
 const Registrar = () => {
@@ -10,6 +10,8 @@ const Registrar = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // --- NUEVOS ESTADOS ---
   const [error, setError] = useState(null); // Para mostrar errores del backend
@@ -105,33 +107,47 @@ const Registrar = () => {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-          <div>
+          <div className="relative">
             <label htmlFor="password" className="sr-only">Contraseña</label>
             <input
               id="password"
               name="password"
-              type="password"
+              type={showPassword ? "text" : "password"} // Tipo dinámico
               autoComplete="new-password"
               required
-              className="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              className="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm pr-10"
               placeholder="Contraseña (mín. 6 caracteres)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none z-20"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
           </div>
-          <div>
+          <div className="relative">
             <label htmlFor="confirm-password" className="sr-only">Confirmar Contraseña</label>
             <input
               id="confirm-password"
               name="confirmPassword"
-              type="password"
+              type={showConfirmPassword ? "text" : "password"} // Tipo dinámico (segundo estado)
               autoComplete="new-password"
               required
-              className="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              className="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm pr-10"
               placeholder="Confirmar Contraseña"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none z-20"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
           </div>
 
           <div>

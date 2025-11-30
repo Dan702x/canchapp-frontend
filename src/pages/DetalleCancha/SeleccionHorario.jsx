@@ -189,15 +189,18 @@ const handleSlotClick = (slot) => {
         const endIdx = endSlot ? getSlotIndex(endSlot) : -1;
         
         const isWithinSelection = startSlot && endSlot && slotIdx >= startIdx && slotIdx < endIdx;
-        
-        // --- AQUÍ USAMOS LA VARIABLE ---
         const isPast = isSlotPast(slot);
 
-        if (status === 'occupied') {
-            classes += "bg-red-500 text-white cursor-not-allowed line-through shadow-md"; 
-        } else if (isPast) { 
-            // --- NUEVO ESTILO PARA HORAS PASADAS (Igual al deshabilitado) ---
+        // --- AQUÍ ESTÁ EL CAMBIO: Mové "isPast" AL PRIMER LUGAR ---
+        
+        if (isPast) { 
+            // 1. PRIORIDAD: Si ya pasó, SIEMPRE gris (aunque haya reserva)
             classes += "bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300"; 
+        
+        } else if (status === 'occupied') {
+            // 2. Si no ha pasado, pero está ocupada, entonces ROJO
+            classes += "bg-red-500 text-white cursor-not-allowed line-through shadow-md"; 
+        
         } else if (isWithinSelection) {
             classes += "bg-green-600 text-white shadow-lg ring-2 ring-green-700"; 
         } else if (status === 'available') {
