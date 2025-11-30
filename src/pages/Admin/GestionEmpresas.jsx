@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { get, put } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { FaCheck, FaTimes, FaSearch, FaEye } from 'react-icons/fa';
 
 // --- ¡NUEVO! Modal para Editar Empresa (Admin) ---
 const EmpresaEditModal = ({ empresa, onClose, onSave }) => {
@@ -69,6 +70,13 @@ const GestionEmpresas = () => {
   const [empresas, setEmpresas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showModalDetalle, setShowModalDetalle] = useState(false);
+  const [selectedSolicitud, setSelectedSolicitud] = useState(null);
+  const handleVerDetalle = (solicitud) => {
+    setSelectedSolicitud(solicitud);
+    setShowModalDetalle(true);
+  };
+
   
   // ¡NUEVO! Estado para el filtro, por defecto "pendiente"
   const [filtroEstado, setFiltroEstado] = useState('pendiente');
@@ -211,25 +219,39 @@ const GestionEmpresas = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm font-medium space-x-3">
-                   {emp.estado === 'pendiente' && (
-                    <>
-                      <button onClick={() => handleGestionSolicitud(emp.id_empresa, 'aprobar')} className="text-green-600 hover:text-green-900">Aprobar</button>
-                      <button onClick={() => handleGestionSolicitud(emp.id_empresa, 'rechazar')} className="text-red-600 hover:text-red-900">Rechazar</button>
-                    </>
-                  )}
-                  {emp.estado === 'activo' && (
-                    <>
-                      <button onClick={() => setEditingEmpresa(emp)} className="text-blue-600 hover:text-blue-900">Editar</button>
-                      <button onClick={() => handleUpdateEstado(emp.id_empresa, 'rechazado')} className="text-red-600 hover:text-red-900">Desactivar</button>
-                    </>
-                  )}
-                  {emp.estado === 'rechazado' && (
-                    <>
-                      <button onClick={() => setEditingEmpresa(emp)} className="text-blue-600 hover:text-blue-900">Editar</button>
-                      <button onClick={() => handleUpdateEstado(emp.id_empresa, 'activo')} className="text-green-600 hover:text-green-900">Re-Activar</button>
-                    </>
-                  )}
-                    </td>
+    
+    {/* --- NUEVO BOTÓN: VER DETALLE (Siempre visible) --- */}
+    <button
+        onClick={() => handleVerDetalle(emp)} 
+        className="text-blue-600 hover:text-blue-900 bg-blue-100 p-2 rounded-full transition-colors"
+        title="Ver detalles"
+    >
+        <FaEye />
+    </button>
+    {/* -------------------------------------------------- */}
+
+    {/* Botones condicionales según el estado */}
+    {emp.estado === 'pendiente' && (
+    <>
+        <button onClick={() => handleGestionSolicitud(emp.id_empresa, 'aprobar')} className="text-green-600 hover:text-green-900 bg-green-100 p-2 rounded-full ml-2" title="Aprobar"><FaCheck /></button>
+        <button onClick={() => handleGestionSolicitud(emp.id_empresa, 'rechazar')} className="text-red-600 hover:text-red-900 bg-red-100 p-2 rounded-full" title="Rechazar"><FaTimes /></button>
+    </>
+    )}
+
+    {emp.estado === 'activo' && (
+    <>
+        <button onClick={() => setEditingEmpresa(emp)} className="text-blue-600 hover:text-blue-900">Editar</button>
+        <button onClick={() => handleUpdateEstado(emp.id_empresa, 'rechazado')} className="text-red-600 hover:text-red-900">Desactivar</button>
+    </>
+    )}
+
+    {emp.estado === 'rechazado' && (
+    <>
+        <button onClick={() => setEditingEmpresa(emp)} className="text-blue-600 hover:text-blue-900">Editar</button>
+        <button onClick={() => handleUpdateEstado(emp.id_empresa, 'activo')} className="text-green-600 hover:text-green-900">Re-Activar</button>
+    </>
+    )}
+</td>
                   </tr>
                 ))
               )}
@@ -244,6 +266,53 @@ const GestionEmpresas = () => {
           onClose={() => setEditingEmpresa(null)}
           onSave={handleSaveEmpresa}
         />
+      )}
+
+      {/* --- MODAL DE DETALLE DE SOLICITUD --- */}
+      {showModalDetalle && selectedSolicitud && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">
+              Detalle de Solicitud
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase">Nombre del Negocio</label>
+                <p className="text-gray-900 font-medium">{selectedSolicitud.nombre_negocio || selectedSolicitud.nombre}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase">RUC</label>
+                    <p className="text-gray-900">{selectedSolicitud.ruc}</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase">Correo Electrónico</label>
+                <p className="text-gray-900">{selectedSolicitud.email}</p>
+              </div>
+
+              {/* AQUÍ MOSTRAMOS LA DESCRIPCIÓN QUE QUERÍAS */}
+              <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Descripción / Motivo:</label>
+                <p className="text-gray-700 italic text-sm">
+                  {selectedSolicitud.descripcion || "Sin descripción proporcionada."}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <button
+                onClick={() => setShowModalDetalle(false)}
+                className="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
